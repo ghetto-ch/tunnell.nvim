@@ -26,8 +26,10 @@ end
 --
 -- Reads `r.line1` and `r.line2`
 local function tunnell_range(r)
-	-- load buffer with range from `r.line1` to `r.line2`
-	vim.cmd('silent ' .. r.line1 .. ',' .. r.line2 .. ':w !tmux load-buffer - ')
+	-- grab range from `r.line1` to `r.line2` and load it into the tmux buffer directly,
+	-- avoiding a `:w !cmd` filter (which always triggers a "press ENTER" prompt)
+	local lines = vim.api.nvim_buf_get_lines(0, r.line1 - 1, r.line2, false)
+	vim.fn.system({ 'tmux', 'load-buffer', '-' }, table.concat(lines, '\n') .. '\n')
 
 	-- tunnell lines
 	local target = vim.b.tmux_target and vim.b.tmux_target or defaults.tmux_target
