@@ -55,7 +55,8 @@ local function tunnell_cell()
 
 	-- if no header is found above cursor, do nothing
 	if start_line == 0 then
-		print('No cell header found above cursor!')
+		print('No cell header found above cursor, sending function.')
+		tunnel_function()
 		return
 	end
 
@@ -77,10 +78,81 @@ local function tunnell_cell()
 	vim.cmd('silent /' .. cell_header)
 end
 
+-- Tunnells paragraph to target
+--
+-- Cursor does not have to be at the start of the paragraph, but anywhere inside it
+local function tunnell_paragraph()
+	-- define start of paragraph
+	-- 'b'  search Backward instead of forward
+	-- 'n'  do Not move the cursor
+	-- 'W'  don't Wrap around the end of the file
+	local start_line = vim.fn.search('^$', 'bnW')
+
+	-- if no blank line found above cursor, paragraph starts at top of file. Otherwise,
+	-- paragraph starts one line below the blank line
+	if start_line == 0 then
+		start_line = 1
+	else
+		start_line = start_line + 1
+	end
+
+	-- define end of paragraph
+	local end_line = vim.fn.search('^$', 'nW')
+
+	-- if no blank line found below cursor, cursor is in the last paragraph so end line
+	-- should be the last line of the file. Otherwise, end line is one line above the blank line
+	if end_line == 0 then
+		end_line = vim.fn.line('$')
+	else
+		end_line = end_line - 1
+	end
+
+	-- tunnell paragraph range
+	tunnell_range({ line1 = start_line, line2 = end_line })
+end
+
+-- Tunnells enclosing function to target
+--
+-- Cursor must be inside a function; uses treesitter to find the smallest enclosing
+-- node whose type looks like a function/method definition
+local function tunnell_function()
+	local node = vim.treesitter.get_node()
+	if not node then
+		print('No treesitter parser/node found at cursor, sending paragraph.')
+		tunnell_paragraph()
+		return
+	end
+
+	while
+		node and not (node:type():match('function') or node:type():match('method'))
+	do
+		node = node:parent()
+	end
+
+	if not node then
+		print('No enclosing function found, sending paragraph.')
+		tunnell_paragraph()
+		return
+	end
+
+	local start_row, _, end_row, end_col = node:range()
+
+	-- treesitter ranges are end-exclusive; if the node ends at column 0 of `end_row`,
+	-- the last line actually belonging to it is the one above
+	if end_col == 0 then
+		end_row = end_row - 1
+	end
+
+	-- tunnell function range (treesitter rows are 0-indexed)
+	tunnell_range({ line1 = start_row + 1, line2 = end_row + 1 })
+end
+
 -- create user commands
 vim.api.nvim_create_user_command('TunnellConfig', config, {})
 vim.api.nvim_create_user_command('TunnellRange', tunnell_range, { range = true })
 vim.api.nvim_create_user_command('TunnellCell', tunnell_cell, {})
+vim.api.nvim_create_user_command('TunnellParagraph', tunnell_paragraph, {})
+vim.api.nvim_create_user_command('TunnellFunction', tunnell_function, {})
 
 -- Setup function for users to call from their plugin managers
 function M.setup(user_config)
