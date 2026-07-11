@@ -39,45 +39,6 @@ local function tunnell_range(r)
 	vim.fn.system('tmux send-keys -t ' .. target .. ' Enter')
 end
 
--- Tunnells cell to target
---
--- Cursor does not have to be on the cell header, but anywhere inside the cell
-local function tunnell_cell()
-	-- load cell_header
-	local cell_header = vim.b.cell_header and vim.b.cell_header or defaults.cell_header
-
-	-- define start of cell
-	-- 'b'  search Backward instead of forward
-	-- 'c'  accept a match at the Cursor position
-	-- 'n'  do Not move the cursor
-	-- 'W'  don't Wrap around the end of the file
-	local start_line = vim.fn.search(cell_header, 'bcnW')
-
-	-- if no header is found above cursor, do nothing
-	if start_line == 0 then
-		print('No cell header found above cursor, sending function.')
-		tunnel_function()
-		return
-	end
-
-	-- define end of cell
-	local end_line = vim.fn.search(cell_header, 'nW')
-
-	-- if no header found below cursor, cursor is in the last cell so end line should be the
-	-- last line of the file. Otherwise, end line is one line above next cell header
-	if end_line == 0 then
-		end_line = vim.fn.line('$')
-	else
-		end_line = end_line - 1
-	end
-
-	-- tunnell cell range
-	tunnell_range({ line1 = start_line, line2 = end_line })
-
-	-- put cursor on next cell
-	vim.cmd('silent /' .. cell_header)
-end
-
 -- Tunnells paragraph to target
 --
 -- Cursor does not have to be at the start of the paragraph, but anywhere inside it
@@ -145,6 +106,45 @@ local function tunnell_function()
 
 	-- tunnell function range (treesitter rows are 0-indexed)
 	tunnell_range({ line1 = start_row + 1, line2 = end_row + 1 })
+end
+
+-- Tunnells cell to target
+--
+-- Cursor does not have to be on the cell header, but anywhere inside the cell
+local function tunnell_cell()
+	-- load cell_header
+	local cell_header = vim.b.cell_header and vim.b.cell_header or defaults.cell_header
+
+	-- define start of cell
+	-- 'b'  search Backward instead of forward
+	-- 'c'  accept a match at the Cursor position
+	-- 'n'  do Not move the cursor
+	-- 'W'  don't Wrap around the end of the file
+	local start_line = vim.fn.search(cell_header, 'bcnW')
+
+	-- if no header is found above cursor, do nothing
+	if start_line == 0 then
+		print('No cell header found above cursor, sending function.')
+		tunnel_function()
+		return
+	end
+
+	-- define end of cell
+	local end_line = vim.fn.search(cell_header, 'nW')
+
+	-- if no header found below cursor, cursor is in the last cell so end line should be the
+	-- last line of the file. Otherwise, end line is one line above next cell header
+	if end_line == 0 then
+		end_line = vim.fn.line('$')
+	else
+		end_line = end_line - 1
+	end
+
+	-- tunnell cell range
+	tunnell_range({ line1 = start_line, line2 = end_line })
+
+	-- put cursor on next cell
+	vim.cmd('silent /' .. cell_header)
 end
 
 -- create user commands
