@@ -38,6 +38,13 @@ local function tunnell_range(r)
 	-- grab range from `r.line1` to `r.line2` and load it into the tmux buffer directly,
 	-- avoiding a `:w !cmd` filter (which always triggers a "press ENTER" prompt)
 	local lines = vim.api.nvim_buf_get_lines(0, r.line1 - 1, r.line2, false)
+
+	-- let filetypes with REPL-specific quirks (e.g. ghci's ':{'/':}' multiline markers)
+	-- transform the lines before they're sent; see after/ftplugin/haskell.lua
+	if vim.b.tunnell_wrap then
+		lines = vim.b.tunnell_wrap(lines)
+	end
+
 	vim.fn.system({ 'tmux', 'load-buffer', '-' }, table.concat(lines, '\n') .. '\n')
 
 	-- tunnell lines
