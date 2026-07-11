@@ -5,13 +5,22 @@ local defaults = {
 	cell_header = '# %%',
 }
 
+-- Derives a cell header from the buffer's `commentstring` (e.g. '// %s' -> '// %%'),
+-- falling back to `defaults.cell_header` when `commentstring` is empty
+local function default_cell_header()
+	if vim.bo.commentstring ~= '' then
+		return vim.bo.commentstring:format('%%')
+	end
+	return defaults.cell_header
+end
+
 -- Sets buffer-variables `cell_header` and `tmux_target` to values given by user via `vim.fn.input`
 local function config()
 	-- cell_header
 	vim.b.cell_header = vim.fn.input({
 		prompt = 'Cell header: ',
-		-- autocomplete with current cell header if exists, otherwise autocomplete with global
-		default = vim.b.cell_header and vim.b.cell_header or defaults.cell_header,
+		-- autocomplete with current cell header if exists, otherwise autocomplete with language default
+		default = vim.b.cell_header and vim.b.cell_header or default_cell_header(),
 	})
 
 	-- tmux_target
@@ -113,7 +122,7 @@ end
 -- Cursor does not have to be on the cell header, but anywhere inside the cell
 local function tunnell_cell()
 	-- load cell_header
-	local cell_header = vim.b.cell_header and vim.b.cell_header or defaults.cell_header
+	local cell_header = vim.b.cell_header and vim.b.cell_header or default_cell_header()
 
 	-- define start of cell
 	-- 'b'  search Backward instead of forward
