@@ -45,7 +45,7 @@ local function tunnell_range(r)
 		lines = vim.b.tunnell_wrap(lines)
 	end
 
-	vim.fn.system({ 'tmux', 'load-buffer', '-' }, table.concat(lines, '\n') .. '\n')
+	vim.fn.system({ 'tmux', 'load-buffer', '-' }, table.concat(lines, '\n'))
 
 	-- tunnell lines
 	local target = vim.b.tmux_target and vim.b.tmux_target or defaults.tmux_target
