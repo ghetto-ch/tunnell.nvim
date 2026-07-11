@@ -1,5 +1,5 @@
 -- ghci requires multiline input to be wrapped between ':{' and ':}';
--- single-line input must NOT be wrapped, so only do it when there's more than one line
+-- not needed for single-line input
 vim.b.tunnell_wrap = function(lines)
 	if #lines <= 1 then
 		return lines
