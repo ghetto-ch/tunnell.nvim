@@ -125,7 +125,7 @@ local function tunnell_cell()
 	-- if no header is found above cursor, do nothing
 	if start_line == 0 then
 		print('No cell header found above cursor, sending function.')
-		tunnel_function()
+		tunnell_function()
 		return
 	end
 
