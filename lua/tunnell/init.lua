@@ -162,15 +162,14 @@ local function tunnell_cell()
 	vim.fn.search(pattern)
 end
 
--- Inserts a new line below the cursor containing the cell header, and enters insert mode
--- at the end of it so a cell name/description can be typed right away
+-- Inserts a new line below the cursor containing the cell header, cursor stays in
+-- normal mode at the end of it
 local function insert_cell_header()
 	local cell_header = vim.b.cell_header and vim.b.cell_header or default_cell_header()
 
 	local row = vim.fn.line('.')
 	vim.api.nvim_buf_set_lines(0, row, row, false, { cell_header })
-	vim.api.nvim_win_set_cursor(0, { row + 1, #cell_header })
-	vim.cmd('startinsert!')
+	vim.api.nvim_win_set_cursor(0, { row + 1, math.max(#cell_header - 1, 0) })
 end
 
 -- create user commands
