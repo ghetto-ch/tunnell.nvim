@@ -36,7 +36,7 @@ local function tunnell_range(r)
 	vim.fn.system('tmux paste-buffer -dpr -t ' .. target)
 
 	-- tunnell <CR> to run cell in REPL
-	-- vim.fn.system("tmux send-keys -t " .. target .. " Enter")
+	vim.fn.system('tmux send-keys -t ' .. target .. ' Enter')
 end
 
 -- Tunnells cell to target
