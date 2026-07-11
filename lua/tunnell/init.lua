@@ -122,14 +122,19 @@ end
 -- Cursor does not have to be on the cell header, but anywhere inside the cell
 local function tunnell_cell()
 	-- load cell_header
-	local cell_header = vim.b.cell_header and vim.b.cell_header or default_cell_header()
+	local cell_header = vim.b.cell_header and vim.b.cell_header
+		or default_cell_header()
+
+	-- '\V' (very nomagic) makes every character literal except '\', so comment markers
+	-- containing regex-special characters (e.g. '/* %% */', '// %%') are matched as-is
+	local pattern = '\\V' .. vim.fn.escape(cell_header, '\\')
 
 	-- define start of cell
 	-- 'b'  search Backward instead of forward
 	-- 'c'  accept a match at the Cursor position
 	-- 'n'  do Not move the cursor
 	-- 'W'  don't Wrap around the end of the file
-	local start_line = vim.fn.search(cell_header, 'bcnW')
+	local start_line = vim.fn.search(pattern, 'bcnW')
 
 	-- if no header is found above cursor, do nothing
 	if start_line == 0 then
@@ -139,7 +144,7 @@ local function tunnell_cell()
 	end
 
 	-- define end of cell
-	local end_line = vim.fn.search(cell_header, 'nW')
+	local end_line = vim.fn.search(pattern, 'nW')
 
 	-- if no header found below cursor, cursor is in the last cell so end line should be the
 	-- last line of the file. Otherwise, end line is one line above next cell header
@@ -152,8 +157,20 @@ local function tunnell_cell()
 	-- tunnell cell range
 	tunnell_range({ line1 = start_line, line2 = end_line })
 
-	-- put cursor on next cell
-	vim.cmd('silent /' .. cell_header)
+	-- put cursor on next cell (search() avoids the '/pattern' ex-command, whose '/'
+	-- delimiter would otherwise need separate escaping for markers containing '/')
+	vim.fn.search(pattern)
+end
+
+-- Inserts a new line below the cursor containing the cell header, and enters insert mode
+-- at the end of it so a cell name/description can be typed right away
+local function insert_cell_header()
+	local cell_header = vim.b.cell_header and vim.b.cell_header or default_cell_header()
+
+	local row = vim.fn.line('.')
+	vim.api.nvim_buf_set_lines(0, row, row, false, { cell_header })
+	vim.api.nvim_win_set_cursor(0, { row + 1, #cell_header })
+	vim.cmd('startinsert!')
 end
 
 -- create user commands
@@ -162,6 +179,7 @@ vim.api.nvim_create_user_command('TunnellRange', tunnell_range, { range = true }
 vim.api.nvim_create_user_command('TunnellCell', tunnell_cell, {})
 vim.api.nvim_create_user_command('TunnellParagraph', tunnell_paragraph, {})
 vim.api.nvim_create_user_command('TunnellFunction', tunnell_function, {})
+vim.api.nvim_create_user_command('TunnellInsertCellHeader', insert_cell_header, {})
 
 -- Setup function for users to call from their plugin managers
 function M.setup(user_config)
