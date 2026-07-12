@@ -1,14 +1,21 @@
 local M = {}
 
 local defaults = {
+	target = 'tmux',
 	tmux_target = '{right}',
+	wezterm_target = 'Right',
 	cell_header = '# %%',
 }
 
 local default_cell_header
 local get_cell_header
+local get_target
 local get_tmux_target
+local get_wezterm_target
 local config
+local send_to_tmux
+local send_to_wezterm
+local send_to_target
 local tunnell_range
 local find_range
 local tunnell_paragraph
@@ -28,8 +35,16 @@ get_cell_header = function()
 	return vim.b.cell_header or default_cell_header()
 end
 
+get_target = function()
+	return vim.b.target or defaults.target
+end
+
 get_tmux_target = function()
 	return vim.b.tmux_target or defaults.tmux_target
+end
+
+get_wezterm_target = function()
+	return vim.b.wezterm_target or defaults.wezterm_target
 end
 
 -- Ask user for configs. Autocomplete with defaults if available.
@@ -39,10 +54,22 @@ config = function()
 		default = get_cell_header(),
 	})
 
-	vim.b.tmux_target = vim.fn.input({
-		prompt = 'Tmux target pane: ',
-		default = get_tmux_target(),
+	vim.b.target = vim.fn.input({
+		prompt = 'Target (tmux/wezterm): ',
+		default = get_target(),
 	})
+
+	if vim.b.target == 'wezterm' then
+		vim.b.wezterm_target = vim.fn.input({
+			prompt = 'Wezterm target pane direction: ',
+			default = get_wezterm_target(),
+		})
+	else
+		vim.b.tmux_target = vim.fn.input({
+			prompt = 'Tmux target pane: ',
+			default = get_tmux_target(),
+		})
+	end
 end
 
 is_function = function(node)
@@ -61,6 +88,34 @@ find_range = function(pattern, back_flags)
 	return start_line, end_line, found_above ~= 0
 end
 
+send_to_tmux = function(lines)
+	local target = get_tmux_target()
+
+	vim.fn.system({ 'tmux', 'load-buffer', '-' }, table.concat(lines, '\n'))
+	vim.fn.system({ 'tmux', 'paste-buffer', '-d', '-p', '-r', '-t', target })
+
+	-- tunnell <CR> to run cell in REPL
+	vim.fn.system({ 'tmux', 'send-keys', '-t', target, 'Enter' })
+end
+
+send_to_wezterm = function(lines)
+	local direction = get_wezterm_target()
+	local pane_id = vim.fn.system({ 'wezterm', 'cli', 'get-pane-direction', direction }):gsub('%s+$', '')
+
+	vim.fn.system({ 'wezterm', 'cli', 'send-text', '--pane-id', pane_id, table.concat(lines, '\n') })
+
+	-- tunnell <CR> to run cell in REPL
+	vim.fn.system({ 'wezterm', 'cli', 'send-text', '--pane-id', pane_id, '--no-paste', '\r' })
+end
+
+send_to_target = function(lines)
+	if get_target() == 'wezterm' then
+		send_to_wezterm(lines)
+	else
+		send_to_tmux(lines)
+	end
+end
+
 tunnell_range = function(r)
 	local lines = vim.api.nvim_buf_get_lines(0, r.line1 - 1, r.line2, false)
 
@@ -69,13 +124,7 @@ tunnell_range = function(r)
 		lines = vim.b.tunnell_wrap(lines)
 	end
 
-	vim.fn.system({ 'tmux', 'load-buffer', '-' }, table.concat(lines, '\n'))
-
-	local target = get_tmux_target()
-	vim.fn.system({ 'tmux', 'paste-buffer', '-d', '-p', '-r', '-t', target })
-
-	-- tunnell <CR> to run cell in REPL
-	vim.fn.system({ 'tmux', 'send-keys', '-t', target, 'Enter' })
+	send_to_target(lines)
 end
 
 tunnell_paragraph = function()

@@ -10,7 +10,7 @@ One use case is having the comfort of editing code in neovim, while tunnelling i
 
 - `:TunnellCell` to tunnell the cell where the cursor is. Note that the cursor doesn't need to be on the cell's header, but anywhere in it
 - `:'<,'>TunnellRange` to tunnell the active selection, or any other range of lines with `:startline,endlineTunnellRange`
-- `:TunnellConfig` to change the default cell header (`# %%`) or the default target (`{right-of}`) of the current buffer
+- `:TunnellConfig` to change the default cell header (`# %%`), the target (`tmux` or `wezterm`), and the target pane of the current buffer
 
 ## Installation
 
@@ -31,7 +31,9 @@ Configuration:
     opts = {
         -- defaults are:
         cell_header = "# %%",
+        target = "tmux", -- or "wezterm"
         tmux_target = "{right-of}",
+        wezterm_target = "Right", -- Up, Down, Left, Right, Next or Prev
     },
 
     -- to lazy-load on keymaps:
@@ -60,4 +62,4 @@ Yes, this plugin does the same as [vim-slime](https://github.com/jpalardy/vim-sl
 
 Name inspired by [quantum tunnelling](https://en.wikipedia.org/wiki/Quantum_tunnelling).
 
-For now, only tmux targets are supported, but making zellij, kitty, wezterm and other targets should not be hard. I just lack the motivation to do it because I personally use tmux.
+Tmux and WezTerm targets are supported. Making zellij, kitty and other targets should not be hard, but I lack the motivation to do it because I personally use tmux and WezTerm.
