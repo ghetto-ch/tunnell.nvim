@@ -89,7 +89,6 @@ end
 tunnell_function = function()
 	local node = vim.treesitter.get_node()
 	if not node then
-		print('No treesitter parser/node found at cursor, sending paragraph.')
 		tunnell_paragraph()
 		return
 	end
@@ -99,7 +98,6 @@ tunnell_function = function()
 	end
 
 	if not node then
-		print('No enclosing function found, sending paragraph.')
 		tunnell_paragraph()
 		return
 	end
@@ -128,7 +126,6 @@ tunnell_cell = function()
 	local start_line, end_line, found = find_range(pattern, 'bcnW')
 
 	if not found then
-		print('No cell header found above cursor, sending function.')
 		tunnell_function()
 		return
 	end
