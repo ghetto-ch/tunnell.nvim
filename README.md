@@ -33,7 +33,7 @@ Configuration:
         cell_header = "# %%",
         target = "tmux", -- or "wezterm"
         tmux_target = "{right-of}",
-        wezterm_target = "Right", -- Up, Down, Left, Right, Next or Prev
+        wezterm_target = "Right", -- Up, Down, Left, Right, Next, Prev, or a literal pane-id (e.g. "5") to target another window/tab
     },
 
     -- to lazy-load on keymaps:

@@ -99,8 +99,14 @@ send_to_tmux = function(lines)
 end
 
 send_to_wezterm = function(lines)
-	local direction = get_wezterm_target()
-	local pane_id = vim.fn.system({ 'wezterm', 'cli', 'get-pane-direction', direction }):gsub('%s+$', '')
+	local target = get_wezterm_target()
+
+	-- a numeric target is a literal pane-id (e.g. to reach another window/tab);
+	-- otherwise it's a direction (Up/Down/Left/Right/Next/Prev) resolved relative to the current pane
+	local pane_id = target
+	if not target:match('^%d+$') then
+		pane_id = vim.fn.system({ 'wezterm', 'cli', 'get-pane-direction', target }):gsub('%s+$', '')
+	end
 
 	vim.fn.system({ 'wezterm', 'cli', 'send-text', '--pane-id', pane_id, table.concat(lines, '\n') })
 
