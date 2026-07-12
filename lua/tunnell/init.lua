@@ -1,7 +1,7 @@
 local M = {}
 
 local defaults = {
-	tmux_target = '{right-of}',
+	tmux_target = '{right}',
 	cell_header = '# %%',
 }
 
